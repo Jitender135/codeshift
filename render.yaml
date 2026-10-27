@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: codeshift-multi-agent-dashboard
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.web.dashboard:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PORT
+        value: "8080"
+      - key: LANGFUSE_HOST
+        value: "https://cloud.langfuse.com"

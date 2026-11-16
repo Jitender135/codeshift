@@ -936,6 +936,46 @@ def get_performance_metrics():
     return JSONResponse(content={"message": "No migration report generated yet."})
 
 
+@app.get("/api/mcp")
+def get_mcp_tools():
+    """Returns registered Model Context Protocol (MCP) tools and schemas."""
+    from tools.mcp_client import mcp_client
+    return JSONResponse(content={
+        "status": "online",
+        "protocol": "Model Context Protocol (MCP) JSON-RPC 2.0",
+        "server": "CodeShift MCP Tool Server",
+        "total_tools": len(mcp_client.list_tools()),
+        "tools": mcp_client.list_tools(),
+        "usage_guide": {
+            "method": "POST /api/mcp",
+            "example_payload": {
+                "jsonrpc": "2.0",
+                "id": "1",
+                "method": "tools/call",
+                "params": {
+                    "name": "verify_python_code",
+                    "arguments": {"python_code": "def hello(): pass"}
+                }
+            }
+        }
+    })
+
+
+@app.post("/api/mcp")
+async def call_mcp_tool(request: Request):
+    """Executes an MCP JSON-RPC 2.0 tool call over HTTP."""
+    from web.mcp_server import handle_mcp_request
+    try:
+        body = await request.json()
+        resp = handle_mcp_request(body)
+        return JSONResponse(content=resp)
+    except Exception as exc:
+        return JSONResponse(
+            status_code=400,
+            content={"jsonrpc": "2.0", "error": {"code": -32603, "message": str(exc)}}
+        )
+
+
 if __name__ == "__main__":
     import uvicorn
 
